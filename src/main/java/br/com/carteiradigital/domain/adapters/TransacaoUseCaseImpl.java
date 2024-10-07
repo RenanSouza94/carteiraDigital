@@ -11,6 +11,7 @@ import br.com.carteiradigital.domain.port.usecase.TransacaoUseCase;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class TransacaoUseCaseImpl implements TransacaoUseCase {
@@ -30,8 +31,8 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
     public void efetivarTransacao(Transacao transacao) throws TransacaoException {
 
         switch (transacao.getTipo()){
-            case ADICAO, COMPRA -> adicao(transacao);
-            case RETIRADA -> retirada(transacao);
+            case RETIRADA, COMPRA -> retirada(transacao);
+            case ADICAO -> adicao(transacao);
             case CANCELAMENTO -> cancelamento(transacao);
             case ESTORNO -> estorno(transacao);
         }
@@ -59,6 +60,7 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
             } else{
                 transacao.setStatus(StatusTransacao.CONCLUIDA);
                 transacao.setDataHoraEfetivacao(LocalDateTime.now());
+                contaRepository.atualizaSaldo(transacao.getValor(), transacao.getIdConta());
             }
             transacaoRepository.save(transacao);
         } catch(Exception e){
@@ -71,7 +73,7 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
         try {
             BigDecimal saldoAtual = contaRepository.consultaSaldo(transacao.getIdConta());
             if(saldoAtual.compareTo(transacao.getValor()) >= 0){
-                contaRepository.atualizaSaldo(transacao.getValor(), transacao.getIdConta());
+                contaRepository.atualizaSaldo(transacao.getValor().negate(), transacao.getIdConta());
                 transacao.setStatus(StatusTransacao.CONCLUIDA);
             } else{
                 transacao.setStatus(StatusTransacao.FALHA);
@@ -88,24 +90,43 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
 
     private void cancelamento(Transacao transacao){
         try {
-
+            Optional<Transacao> transacaoEncontrada = transacaoRepository.findByIdentificadorAndStatus(transacao.getIdentificador(), StatusTransacao.PENDENTE);
+            if(transacaoEncontrada.isEmpty()){
+                transacao.setStatus(StatusTransacao.FALHA);
+                transacao.setDescricaoStatus("Não foi encontrado transação pendente para cancelar");
+            } else {
+                Transacao transacaoAtualizada = transacaoEncontrada.get();
+                transacaoAtualizada.setStatus(StatusTransacao.CANCELADA);
+            }
         } catch(Exception e){
-            log.error("Erro:cancelamento: "+e.getMessage());
-            throw new TransacaoException("Ocorreu uma falha no cancelamento da transação");
+            log.error("Erro:cancelamento "+e.getMessage());
+            transacao.setStatus(StatusTransacao.FALHA);
+            transacao.setDescricaoStatus("Ocorreu uma falha ao cancelar transação");
         }
+
+        transacaoRepository.save(transacao);
     }
     private void estorno(Transacao transacao){
         try {
-
+            if(transacaoRepository.existByIdentificadorAndStatusTransacao(transacao.getIdentificador(), StatusTransacao.CONCLUIDA)){
+                transacao.setStatus(StatusTransacao.CONCLUIDA);
+                transacao.setDescricaoStatus("Estorno");
+                contaRepository.atualizaSaldo(transacao.getValor(), transacao.getIdConta());
+            } else{
+                transacao.setStatus(StatusTransacao.FALHA);
+                transacao.setDescricaoStatus("Não foi encontrado a transação para estornar");
+            }
         } catch(Exception e){
-            log.error("Erro:estorno: "+e.getMessage());
-            throw new TransacaoException("Ocorreu uma falha no estorno da transação");
+            log.error("Erro:estorno "+e.getMessage());
+            transacao.setStatus(StatusTransacao.FALHA);
+            transacao.setDescricaoStatus("Ocorreu uma falha ao cancelar transação");
         }
+
+        transacaoRepository.save(transacao);
     }
 
     @Override
     public List<Transacao> listarTransacoes(UUID idConta) {
-
         return transacaoRepository.findByIdConta(idConta);
     }
 

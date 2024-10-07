@@ -14,8 +14,8 @@ public class H2ContaRepositoryImpl implements ContaRepository {
     private SpringDataContaRepository repository;
 
     @Override
-    public void atualizaSaldo(BigDecimal novoValor, UUID idConta) {
-        repository.atualizaSaldo(idConta, novoValor);
+    public void atualizaSaldo(BigDecimal valor, UUID idConta) {
+        repository.atualizaSaldo(idConta, valor);
     }
 
     @Override

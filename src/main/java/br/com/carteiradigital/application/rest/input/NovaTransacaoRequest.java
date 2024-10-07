@@ -2,6 +2,7 @@ package br.com.carteiradigital.application.rest.input;
 
 import br.com.carteiradigital.domain.entity.StatusTransacao;
 import br.com.carteiradigital.domain.entity.TipoTransacao;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -15,10 +16,8 @@ public class NovaTransacaoRequest {
     @NotBlank(message = "O atributo tipo é obrigatório")
     private TipoTransacao tipo;
     @NotBlank(message = "O atributo valor é obrigatório")
-    @Min(value = 0, message = "Valor inválido")
+    @DecimalMin(value = "0.01", message = "Valor inválido")
     private BigDecimal valor;
-    @NotBlank(message = "O atributo dataHora é obrigatório")
-    private LocalDateTime dataHora;
     @NotBlank(message = "O atributo identificador é obrigatório")
     private String identificador;
     @NotBlank(message = "O atributo status é obrigatório")

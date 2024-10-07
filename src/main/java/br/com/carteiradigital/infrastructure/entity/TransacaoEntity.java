@@ -19,10 +19,12 @@ public class TransacaoEntity {
     private UUID id;
     private TipoTransacao tipo;
     private BigDecimal valor;
-    private LocalDateTime dataHora;
+    private LocalDateTime dataHoraCriacao;
+    private LocalDateTime dataHoraEfetivacao;
     private String identificador;
     private StatusTransacao status;
     private String descricao;
+    private String descricaoStatus;
     @ManyToOne
     private UUID idConta;
 

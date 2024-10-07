@@ -11,8 +11,9 @@ public interface TransacaoRepository {
 
     void save(Transacao transacao);
     List<Transacao> findByIdConta(UUID idConta);
-    Optional<Transacao> findByIdentificador(String identificador);
+    Optional<Transacao> findByIdentificadorAndStatus(String identificador, StatusTransacao statusTransacao);
     Boolean existByIdentificadorAndStatusTransacao(String identificador, StatusTransacao statusTransacao);
+
 
 
 }

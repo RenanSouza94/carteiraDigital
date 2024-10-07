@@ -1,5 +1,6 @@
 package br.com.carteiradigital.infrastructure.repository.impl;
 
+import br.com.carteiradigital.domain.entity.StatusTransacao;
 import br.com.carteiradigital.domain.entity.Transacao;
 import br.com.carteiradigital.domain.port.repository.TransacaoRepository;
 import br.com.carteiradigital.infrastructure.entity.TransacaoEntity;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -33,8 +35,15 @@ public class H2TransacaoRepositoryImpl implements TransacaoRepository {
     }
 
     @Override
-    public Boolean existByIdentificador(String identificador) {
-        return repository.existByIdentificador(identificador);
+    public Optional<Transacao> findByIdentificadorAndStatus(String identificador, StatusTransacao statusTransacao) {
+        Optional<TransacaoEntity> transacaoEntity = repository.findByIdentificadorAndStatus(identificador, statusTransacao);
+        return transacaoEntity.map(entity -> mapper.map(entity, Transacao.class));
     }
+
+    @Override
+    public Boolean existByIdentificadorAndStatusTransacao(String identificador, StatusTransacao statusTransacao) {
+        return repository.existByIdentificadorAndStatus(identificador, statusTransacao);
+    }
+
 
 }

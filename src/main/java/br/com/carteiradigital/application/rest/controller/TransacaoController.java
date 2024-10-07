@@ -1,10 +1,12 @@
 package br.com.carteiradigital.application.rest.controller;
 
 
+import br.com.carteiradigital.application.rest.input.NovaTransacaoRequest;
 import br.com.carteiradigital.domain.entity.Transacao;
 import br.com.carteiradigital.domain.port.usecase.ContaUseCase;
 import br.com.carteiradigital.domain.port.usecase.TransacaoUseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class TransacaoController {
     private final TransacaoUseCase transacaoUseCase;
     private final ContaUseCase contaUseCase;
+    private final ModelMapper mapper;
 
     private final JmsTemplate jmsTemplate;
 
@@ -28,16 +31,16 @@ public class TransacaoController {
     private String queue;
 
     @Autowired
-    public TransacaoController(TransacaoUseCase transacaoUseCase, ContaUseCase contaUseCase, JmsTemplate jmsTemplate) {
+    public TransacaoController(TransacaoUseCase transacaoUseCase, ContaUseCase contaUseCase, JmsTemplate jmsTemplate, ModelMapper mapper) {
         this.transacaoUseCase = transacaoUseCase;
         this.contaUseCase = contaUseCase;
         this.jmsTemplate = jmsTemplate;
+        this.mapper = mapper;
     }
 
     @PostMapping("/adicionarTransacao")
-    public ResponseEntity<Transacao> adicionarTransacao(@RequestBody Transacao transacao) {
-        transacaoUseCase.adicionarTransacao(transacao);
-        return ResponseEntity.ok(transacaoUseCase.adicionarTransacao(transacao));
+    public ResponseEntity<Transacao> adicionarTransacao(@RequestBody NovaTransacaoRequest transacao) {
+        return ResponseEntity.ok(transacaoUseCase.adicionarTransacao(mapper.map(transacao, Transacao.class)));
     }
 
     @PostMapping("/efetivarTransacao")
