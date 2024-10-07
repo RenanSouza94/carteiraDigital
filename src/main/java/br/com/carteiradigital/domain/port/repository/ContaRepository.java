@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface ContaRepository {
-    void atualizaSaldo(BigDecimal novoValor, UUID idConta);
+    void atualizaSaldo(BigDecimal valor, UUID idConta);
 
     BigDecimal consultaSaldo(UUID idConta);
 }

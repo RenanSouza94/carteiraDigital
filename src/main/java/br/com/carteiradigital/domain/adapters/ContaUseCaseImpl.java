@@ -18,12 +18,12 @@ public class ContaUseCaseImpl implements ContaUseCase {
     }
 
     @Override
-    public void atualizaSaldo(BigDecimal novoValor, UUID idConta) {
-
+    public void atualizaSaldo(BigDecimal valor, UUID idConta) {
+        contaRepository.atualizaSaldo(valor, idConta);
     }
 
     @Override
     public BigDecimal consultaSaldo(UUID idConta) {
-        return null;
+        return contaRepository.consultaSaldo(idConta);
     }
 }
