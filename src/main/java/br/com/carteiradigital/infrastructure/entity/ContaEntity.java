@@ -19,5 +19,4 @@ public class ContaEntity {
     private String agencia;
     private String numConta;
     private BigDecimal saldo;
-    private List<TransacaoEntity> transacoes;
 }

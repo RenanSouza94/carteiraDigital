@@ -42,7 +42,7 @@ public class H2TransacaoRepositoryImpl implements TransacaoRepository {
 
     @Override
     public Boolean existByIdentificadorAndStatusTransacao(String identificador, StatusTransacao statusTransacao) {
-        return repository.existByIdentificadorAndStatus(identificador, statusTransacao);
+        return repository.existsByIdentificadorAndStatus(identificador, statusTransacao);
     }
 
 

@@ -13,7 +13,7 @@ public interface SpringDataContaRepository extends JpaRepository<ContaEntity, UU
 
     BigDecimal findSaldoById(UUID id);
 
-    @Query(value = "UPDATE CONTA SET SALDO = SALDO + :valor", nativeQuery = true)
+    @Query(value = "UPDATE CONTA SET SALDO = SALDO + :valor WHERE ID = :idConta ", nativeQuery = true)
     @Modifying
     void atualizaSaldo(@Param("idConta") UUID idConta, @Param("valor") BigDecimal valor);
 }

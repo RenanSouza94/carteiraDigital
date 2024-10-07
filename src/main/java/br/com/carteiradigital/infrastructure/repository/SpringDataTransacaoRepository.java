@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface SpringDataTransacaoRepository extends JpaRepository<TransacaoEntity, UUID> {
 
-    Boolean existByIdentificadorAndStatus(String identificador, StatusTransacao status);
+    Boolean existsByIdentificadorAndStatus(String identificador, StatusTransacao status);
 
     List<TransacaoEntity> findByIdConta(UUID idConta);
 

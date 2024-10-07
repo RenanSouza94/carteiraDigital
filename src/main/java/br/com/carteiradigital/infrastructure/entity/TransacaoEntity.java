@@ -25,7 +25,6 @@ public class TransacaoEntity {
     private StatusTransacao status;
     private String descricao;
     private String descricaoStatus;
-    @ManyToOne
     private UUID idConta;
 
 }
