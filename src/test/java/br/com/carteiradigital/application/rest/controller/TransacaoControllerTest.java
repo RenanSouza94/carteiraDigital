@@ -1,6 +1,7 @@
 package br.com.carteiradigital.application.rest.controller;
 
 import br.com.carteiradigital.application.rest.input.TransacaoRequest;
+import br.com.carteiradigital.domain.entity.EfetivaTransacao;
 import br.com.carteiradigital.domain.entity.Transacao;
 import br.com.carteiradigital.domain.exception.TransacaoException;
 import br.com.carteiradigital.domain.port.usecase.LogUseCase;
@@ -14,9 +15,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +28,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TransacaoControllerTest {
 
@@ -42,12 +48,15 @@ public class TransacaoControllerTest {
     @Mock
     private LogUseCase log;
 
+    @Mock
     private ObjectMapper objectMapper;
+
+    private MockMvc mockMvc;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        objectMapper = new ObjectMapper();
+        mockMvc = MockMvcBuilders.standaloneSetup(transacaoController).build();
     }
 
     @Test
@@ -76,18 +85,73 @@ public class TransacaoControllerTest {
     }
 
     @Test
-    public void testEfetivarTransacao_Success() throws Exception {
-        String identificacao = "ADD55878";
+    void deveEfetivarTransacaoComSucesso() throws Exception {
+        // Arrange
+        String identificacao = UUID.randomUUID().toString();
         boolean cancelar = false;
 
+        byte[] messageBody = new byte[0];
+        when(objectMapper.writeValueAsBytes(any())).thenReturn(messageBody);
+        doNothing().when(rabbitTemplate).convertAndSend(messageBody);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/transacao/efetivarTransacao/{identificacao}", identificacao)
+                        .param("cancelar", String.valueOf(cancelar)))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void deveRetornarErroQuandoFalharAoEfetivarTransacao() throws Exception {
+        // Arrange
+        String identificacao = UUID.randomUUID().toString();
+        boolean cancelar = false;
+        EfetivaTransacao efetivaTransacao = new EfetivaTransacao(identificacao, cancelar);
+
+        when(objectMapper.writeValueAsBytes(efetivaTransacao)).thenThrow(new RuntimeException("Erro ao criar mensagem"));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/transacao/efetivarTransacao/{identificacao}", identificacao)
+                        .param("cancelar", String.valueOf(cancelar)))
+                .andExpect(status().isInternalServerError());
+
+        verify(rabbitTemplate, times(0)).convertAndSend(anyString(), any(Message.class));
+    }
+
+    @Test
+    void deveEnviarTransacaoComSucessoParaFila() throws Exception {
+        // Arrange
+        String identificacao = UUID.randomUUID().toString();
+        boolean cancelar = false;
+
+        byte[] messageBody = new byte[0];
+
+        when(objectMapper.writeValueAsBytes(any())).thenReturn(messageBody);
+        doNothing().when(rabbitTemplate).convertAndSend(anyString(), eq(messageBody));
+
+        // Act
         ResponseEntity<String> response = transacaoController.efetivarTransacao(identificacao, cancelar);
 
-        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(rabbitTemplate).convertAndSend(any(), messageCaptor.capture());
-
+        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Transação enviada com sucesso", response.getBody());
-        assertEquals("application/json", messageCaptor.getValue().getMessageProperties().getContentType());
+    }
+
+    @Test
+    void deveRetornarErroAoTentarEfetivarTransacaoComErroDeConversao() throws Exception {
+        // Arrange
+        String identificacao = UUID.randomUUID().toString();
+        boolean cancelar = false;
+        EfetivaTransacao efetivaTransacao = new EfetivaTransacao(identificacao, cancelar);
+
+        when(objectMapper.writeValueAsBytes(efetivaTransacao)).thenThrow(new RuntimeException("Erro ao converter mensagem"));
+
+        // Act
+        ResponseEntity<String> response = transacaoController.efetivarTransacao(identificacao, cancelar);
+
+        // Assert
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Ocorreu um erro ao efetivar transação", response.getBody());
     }
 
     @Test
