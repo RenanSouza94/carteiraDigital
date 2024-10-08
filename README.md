@@ -2,13 +2,14 @@
 
 ## Descrição
 Uma aplicação de carteira digital que permite operações de adição, retirada, compras e estornos.
-
+![Diagrama-carteira-digital](/Diagrama-carteira-digital.png)
 ## Tecnologias
 - Java 17
 - Spring Boot
 - H2 Database
 - Docker
 - Swagger
+- RabbitMQ
 
 ## Execução
 1. Clone o repositório.
@@ -19,8 +20,8 @@ Uma aplicação de carteira digital que permite operações de adição, retirad
 ## Estrutura do Projeto
 - **src**: Código-fonte da aplicação
 - **Dockerfile**: Configuração do Docker
-- **migrations**: Scripts SQL para criação de tabelas
+- **schema.sql**: Scripts SQL para criação de tabelas
 
 ## Testes
-Os testes unitários e integrados estão localizados na pasta `src/test/java`.
+Os testes unitários estão localizados na pasta `src/test/java`.
 
