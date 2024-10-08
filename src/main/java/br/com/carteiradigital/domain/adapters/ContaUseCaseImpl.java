@@ -30,7 +30,7 @@ public class ContaUseCaseImpl implements ContaUseCase {
         if(valor == null){
             throw new ContaException("Conta inexistente");
         }
-        return contaRepository.consultaSaldo(idConta);
+        return valor;
     }
 
     @Override
