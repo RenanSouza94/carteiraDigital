@@ -98,4 +98,21 @@ public class Transacao {
     public void setDataHoraEfetivacao(LocalDateTime dataHoraEfetivacao) {
         this.dataHoraEfetivacao = dataHoraEfetivacao;
     }
+
+    public void cancelar(){
+        setStatus(StatusTransacao.CANCELADA);
+        setDataHoraEfetivacao(LocalDateTime.now());
+    }
+
+    public void concluir(){
+        setStatus(StatusTransacao.CONCLUIDA);
+        setDataHoraEfetivacao(LocalDateTime.now());
+    }
+
+    public void pendente(){
+        setStatus(StatusTransacao.PENDENTE);
+        setDataHoraCriacao(LocalDateTime.now());
+    }
+
+
 }

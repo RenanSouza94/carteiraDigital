@@ -1,7 +1,10 @@
 package br.com.carteiradigital.infrastructure.repository.impl;
 
+import br.com.carteiradigital.domain.entity.Conta;
 import br.com.carteiradigital.domain.port.repository.ContaRepository;
+import br.com.carteiradigital.infrastructure.entity.ContaEntity;
 import br.com.carteiradigital.infrastructure.repository.SpringDataContaRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +16,9 @@ public class H2ContaRepositoryImpl implements ContaRepository {
     @Autowired
     private SpringDataContaRepository repository;
 
+    @Autowired
+    private ModelMapper mapper;
+
     @Override
     public void atualizaSaldo(BigDecimal valor, UUID idConta) {
         repository.atualizaSaldo(idConta, valor);
@@ -21,5 +27,10 @@ public class H2ContaRepositoryImpl implements ContaRepository {
     @Override
     public BigDecimal consultaSaldo(UUID idConta) {
         return repository.findSaldoById(idConta);
+    }
+
+    @Override
+    public void save(Conta conta) {
+        repository.save(mapper.map(conta, ContaEntity.class));
     }
 }

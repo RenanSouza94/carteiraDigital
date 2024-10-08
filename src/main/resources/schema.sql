@@ -1,0 +1,2 @@
+create table conta (saldo numeric(38,2), id uuid not null, agencia varchar(255), num_conta varchar(255), primary key (id));
+create table transacao (status tinyint check (status between 0 and 3), tipo tinyint check (tipo between 0 and 4), valor numeric(38,2), data_hora_criacao timestamp(6), data_hora_efetivacao timestamp(6), id uuid not null, id_conta uuid, descricao varchar(255), descricao_status varchar(255), identificador varchar(255), primary key (id));

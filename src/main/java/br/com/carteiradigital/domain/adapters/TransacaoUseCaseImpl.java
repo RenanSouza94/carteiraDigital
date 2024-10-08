@@ -1,5 +1,6 @@
 package br.com.carteiradigital.domain.adapters;
 
+import br.com.carteiradigital.domain.entity.EfetivaTransacao;
 import br.com.carteiradigital.domain.entity.StatusTransacao;
 import br.com.carteiradigital.domain.entity.Transacao;
 import br.com.carteiradigital.domain.exception.TransacaoException;
@@ -7,9 +8,9 @@ import br.com.carteiradigital.domain.port.repository.ContaRepository;
 import br.com.carteiradigital.domain.port.repository.TransacaoRepository;
 import br.com.carteiradigital.domain.port.usecase.LogUseCase;
 import br.com.carteiradigital.domain.port.usecase.TransacaoUseCase;
+import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,28 +29,44 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
     }
 
     @Override
-    public void efetivarTransacao(Transacao transacao) throws TransacaoException {
+    @Transactional
+    public void efetivarTransacao(EfetivaTransacao efetivaTransacao) throws TransacaoException {
 
-        switch (transacao.getTipo()){
-            case RETIRADA, COMPRA -> retirada(transacao);
-            case ADICAO -> adicao(transacao);
-            case CANCELAMENTO -> cancelamento(transacao);
-            case ESTORNO -> estorno(transacao);
+        Optional<Transacao> transacaoOpt = transacaoRepository.findByIdentificadorAndStatus(efetivaTransacao.getIdentificacao(), StatusTransacao.PENDENTE);
+
+        if(transacaoOpt.isPresent()){
+            Transacao transacao = transacaoOpt.get();
+
+            if(efetivaTransacao.isCancelar()){
+                transacao.cancelar();
+                transacaoRepository.save(transacao);
+                return;
+            }
+
+            switch (transacao.getTipo()){
+                case RETIRADA, COMPRA -> retirada(transacao);
+                case ADICAO -> adicao(transacao);
+                case ESTORNO -> estorno(transacao);
+            }
         }
-
 
     }
 
     @Override
     public Transacao adicionarTransacao(Transacao transacao) {
-        if(transacaoRepository.existByIdentificadorAndStatusTransacao(transacao.getIdentificador(), StatusTransacao.PENDENTE)){
-            throw new TransacaoException("Já existe ume transação pendente com esse identificador.");
+        try {
+            if(transacaoRepository.existByIdentificadorAndStatusTransacao(transacao.getIdentificador(), StatusTransacao.PENDENTE)){
+                throw new TransacaoException("Já existe ume transação pendente com esse identificador.");
+            }
+            transacao.pendente();
+            transacao.setDescricaoStatus("Transação pendente de efetivação");
+            transacaoRepository.save(transacao);
+            return transacao;
+        } catch(Exception e){
+            log.error("Erro:adicionarTransacao"+e.getMessage());
+            throw e;
         }
-        transacao.setStatus(StatusTransacao.PENDENTE);
-        transacao.setDescricaoStatus("Transação pendente de efetivação");
-        transacao.setDataHoraCriacao(LocalDateTime.now());
-        transacaoRepository.save(transacao);
-        return transacao;
+
     }
 
     private void adicao(Transacao transacao){
@@ -58,8 +75,7 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
                 transacao.setStatus(StatusTransacao.FALHA);
                 transacao.setDescricaoStatus("Transação em duplicidade");
             } else{
-                transacao.setStatus(StatusTransacao.CONCLUIDA);
-                transacao.setDataHoraEfetivacao(LocalDateTime.now());
+                transacao.concluir();
                 contaRepository.atualizaSaldo(transacao.getValor(), transacao.getIdConta());
             }
             transacaoRepository.save(transacao);
@@ -74,7 +90,7 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
             BigDecimal saldoAtual = contaRepository.consultaSaldo(transacao.getIdConta());
             if(saldoAtual.compareTo(transacao.getValor()) >= 0){
                 contaRepository.atualizaSaldo(transacao.getValor().negate(), transacao.getIdConta());
-                transacao.setStatus(StatusTransacao.CONCLUIDA);
+                transacao.concluir();
             } else{
                 transacao.setStatus(StatusTransacao.FALHA);
                 transacao.setDescricaoStatus("Saldo insuficiente");
@@ -88,28 +104,10 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
         transacaoRepository.save(transacao);
     }
 
-    private void cancelamento(Transacao transacao){
-        try {
-            Optional<Transacao> transacaoEncontrada = transacaoRepository.findByIdentificadorAndStatus(transacao.getIdentificador(), StatusTransacao.PENDENTE);
-            if(transacaoEncontrada.isEmpty()){
-                transacao.setStatus(StatusTransacao.FALHA);
-                transacao.setDescricaoStatus("Não foi encontrado transação pendente para cancelar");
-            } else {
-                Transacao transacaoAtualizada = transacaoEncontrada.get();
-                transacaoAtualizada.setStatus(StatusTransacao.CANCELADA);
-            }
-        } catch(Exception e){
-            log.error("Erro:cancelamento "+e.getMessage());
-            transacao.setStatus(StatusTransacao.FALHA);
-            transacao.setDescricaoStatus("Ocorreu uma falha ao cancelar transação");
-        }
-
-        transacaoRepository.save(transacao);
-    }
     private void estorno(Transacao transacao){
         try {
             if(transacaoRepository.existByIdentificadorAndStatusTransacao(transacao.getIdentificador(), StatusTransacao.CONCLUIDA)){
-                transacao.setStatus(StatusTransacao.CONCLUIDA);
+                transacao.concluir();
                 transacao.setDescricaoStatus("Estorno");
                 contaRepository.atualizaSaldo(transacao.getValor(), transacao.getIdConta());
             } else{
@@ -129,5 +127,6 @@ public class TransacaoUseCaseImpl implements TransacaoUseCase {
     public List<Transacao> listarTransacoes(UUID idConta) {
         return transacaoRepository.findByIdConta(idConta);
     }
+
 
 }

@@ -11,9 +11,10 @@ import java.util.UUID;
 
 public interface SpringDataContaRepository extends JpaRepository<ContaEntity, UUID> {
 
-    BigDecimal findSaldoById(UUID id);
+    @Query("SELECT c.saldo FROM ContaEntity c WHERE c.id = :id")
+    BigDecimal findSaldoById(@Param("id")  UUID id);
 
-    @Query(value = "UPDATE CONTA SET SALDO = SALDO + :valor WHERE ID = :idConta ", nativeQuery = true)
+    @Query(value = "UPDATE CONTA SET SALDO = (SALDO + :valor) WHERE ID = :idConta ", nativeQuery = true)
     @Modifying
     void atualizaSaldo(@Param("idConta") UUID idConta, @Param("valor") BigDecimal valor);
 }
