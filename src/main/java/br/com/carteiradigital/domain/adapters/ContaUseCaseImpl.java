@@ -26,11 +26,11 @@ public class ContaUseCaseImpl implements ContaUseCase {
 
     @Override
     public BigDecimal consultaSaldo(UUID idConta) {
-        BigDecimal valor = contaRepository.consultaSaldo(idConta);
-        if(valor == null){
+        Conta conta = contaRepository.findById(idConta);
+        if(conta == null){
             throw new ContaException("Conta inexistente");
         }
-        return valor;
+        return conta.getSaldo();
     }
 
     @Override

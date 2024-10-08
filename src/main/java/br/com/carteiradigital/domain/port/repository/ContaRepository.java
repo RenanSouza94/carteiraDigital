@@ -11,4 +11,6 @@ public interface ContaRepository {
     BigDecimal consultaSaldo(UUID idConta);
 
     void save(Conta conta);
+
+    Conta findById(UUID id);
 }

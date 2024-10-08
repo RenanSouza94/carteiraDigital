@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 @Component
 public class H2ContaRepositoryImpl implements ContaRepository {
@@ -32,5 +33,14 @@ public class H2ContaRepositoryImpl implements ContaRepository {
     @Override
     public void save(Conta conta) {
         repository.save(mapper.map(conta, ContaEntity.class));
+    }
+
+    @Override
+    public Conta findById(UUID id) {
+        Optional<ContaEntity> entity = repository.findById(id);
+        if(entity.isPresent()){
+            return mapper.map(entity, Conta.class);
+        }
+        return null;
     }
 }

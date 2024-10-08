@@ -1,4 +1,4 @@
-package br.com.carteiradigital.application.jms;
+package br.com.carteiradigital.application.queue;
 
 import br.com.carteiradigital.domain.entity.EfetivaTransacao;
 import br.com.carteiradigital.domain.port.usecase.LogUseCase;
