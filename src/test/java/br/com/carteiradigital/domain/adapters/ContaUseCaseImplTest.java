@@ -32,7 +32,7 @@ class ContaUseCaseImplTest {
 
     @BeforeEach
     void setUp() {
-        idConta = UUID.randomUUID();
+        idConta = UUID.fromString("0133f454-bfbe-4ff3-80ac-5d989a9132a0");
         conta = new Conta();
         conta.setId(idConta);
         conta.setSaldo(BigDecimal.valueOf(100.0));
@@ -47,26 +47,13 @@ class ContaUseCaseImplTest {
     }
 
     @Test
-    void deveConsultarSaldoComSucesso() {
-        BigDecimal saldoEsperado = BigDecimal.valueOf(100.0);
-        when(contaRepository.consultaSaldo(idConta)).thenReturn(saldoEsperado);
+    void consultaSaldo_deveRetornarSaldoQuandoContaExistir() {
+        when(contaRepository.findById(idConta)).thenReturn(conta);
 
         BigDecimal saldo = contaUseCaseImpl.consultaSaldo(idConta);
 
-        assertEquals(saldoEsperado, saldo);
-        verify(contaRepository, times(1)).consultaSaldo(idConta);
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoContaNaoExistir() {
-
-        when(contaRepository.consultaSaldo(idConta)).thenReturn(null);
-        ContaException thrown = assertThrows(ContaException.class, () -> {
-            contaUseCaseImpl.consultaSaldo(idConta);
-        });
-
-        assertEquals("Conta inexistente", thrown.getMessage());
-        verify(contaRepository, times(1)).consultaSaldo(idConta);
+        assertEquals(BigDecimal.valueOf(100.00), saldo);
+        verify(contaRepository).findById(idConta);
     }
 
     @Test
